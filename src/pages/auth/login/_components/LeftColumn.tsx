@@ -13,10 +13,10 @@ export const LeftColumn = () => {
           />
           <div className="flex flex-col gap-2">
             <span className="text-5xl font-bold leading-none tracking-tight text-white">
-              Logbook
+              MEDIC LINK
             </span>
             <span className="text-md font-semibold uppercase leading-none tracking-[0.22em] text-emerald-100">
-              Medlink
+              LOGBOOK
             </span>
           </div>
         </div>
