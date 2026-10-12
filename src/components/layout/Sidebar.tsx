@@ -38,8 +38,8 @@ export const Sidebar = () => {
         <div className="flex items-center gap-3">
           <img src={orthoLogo} alt="Logo UNS Orthopaedi" className="h-10 w-10 object-contain" />
           <div className="flex flex-col gap-1">
-            <span className="text-lg font-bold leading-none tracking-tight text-[#04563D]">Logbook</span>
-            <span className="text-[10px] font-semibold uppercase leading-none tracking-[0.22em] text-[#087F5B]">Medlink</span>
+            <span className="text-lg font-bold leading-none tracking-tight text-[#04563D]">MEDIC LINK</span>
+            <span className="text-[10px] font-semibold uppercase leading-none tracking-[0.22em] text-[#087F5B]">LOGBOOK</span>
           </div>
         </div>
         <button
@@ -60,8 +60,8 @@ export const Sidebar = () => {
         <div className="flex items-center justify-center gap-3 px-2 mb-7">
           <img src={orthoLogo} alt="Logo UNS Orthopaedi" className="w-20 h-20 object-contain" />
           <div className="flex flex-col gap-1.5">
-            <span className="text-2xl font-bold leading-none tracking-tight text-[#04563D]">Logbook</span>
-            <span className="text-xs font-semibold uppercase leading-none tracking-[0.22em] text-[#087F5B]">Medlink</span>
+            <span className="text-2xl font-bold leading-none tracking-tight text-[#04563D]">MEDIC LINK</span>
+            <span className="text-xs font-semibold uppercase leading-none tracking-[0.22em] text-[#087F5B]">LOGBOOK</span>
           </div>
         </div>
 
