@@ -1,6 +1,7 @@
 import { Topbar } from "@/components/layout/Topbar";
 import { ROUTES } from "@/utils/routes";
 import { useNavigate, useParams } from "react-router-dom";
+import { Filter } from "./_components/Filter";
 import { BaseTable } from "@/components/basetable/BaseTable";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
@@ -26,13 +27,34 @@ export default function MorbidityByUserPage() {
     useMorbidityStore();
 
   // ========== URL PARAMS (using useUrlParams hook) ==========
-  const { page, limit, search, debouncedSearch, setLimit, setSearch } =
-    useUrlParams({
-      defaultPage: 1,
-      defaultLimit: DEFAULT_PAGE_SIZE,
-      filterKeys: [],
-      searchDebounceMs: 500,
-    });
+  const {
+    page,
+    limit,
+    search,
+    debouncedSearch,
+    filters,
+    setLimit,
+    setSearch,
+    setFilters,
+    resetParams,
+  } = useUrlParams({
+    defaultPage: 1,
+    defaultLimit: DEFAULT_PAGE_SIZE,
+    filterKeys: ["status"],
+    searchDebounceMs: 500,
+  });
+
+  const status = filters.status as string | undefined;
+
+  // ========== HANDLERS ==========
+
+  const handleFilterChange = (newFilters: { status?: string | null }) => {
+    setFilters(newFilters);
+  };
+
+  const handleFilterReset = () => {
+    resetParams();
+  };
 
   const handleSearchChange = (query: string) => {
     setSearch(query);
@@ -51,9 +73,10 @@ export default function MorbidityByUserPage() {
         limit,
         search: debouncedSearch || undefined,
         id_user: Number(idUser),
+        status: status ?? undefined,
       });
     }
-  }, [page, limit, debouncedSearch, idUser, loadMorbidityByUserList]);
+  }, [page, limit, debouncedSearch, idUser, loadMorbidityByUserList, status]);
 
   useEffect(() => {
     return () => reset();
@@ -181,6 +204,9 @@ export default function MorbidityByUserPage() {
       />
       <div className="flex-1 px-4 sm:px-6 py-2 overflow-hidden">
         <div className="h-full flex flex-col gap-2">
+          {/* Filter Section */}
+          <Filter onChange={handleFilterChange} onReset={handleFilterReset} />
+
           {/* Table Section */}
           <div className="flex-1 min-h-0 bg-white rounded-lg border overflow-hidden">
             <BaseTable
