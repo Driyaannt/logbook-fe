@@ -100,7 +100,6 @@ export const Kegiatan = ({ data }: Props) => {
       ) : (
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500 w-24">Catatan</span>
-          <div className="bg-red-200">hai</div>
           <span className="text-sm font-medium text-gray-800">
             {data?.attachment ?? "-"}
           </span>
