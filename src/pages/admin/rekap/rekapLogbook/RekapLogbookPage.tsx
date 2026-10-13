@@ -10,7 +10,7 @@ import type { Row } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { icons } from "@/assets/images/Icon";
 import useWindowDimensions from "@/hooks/useWindowDimension";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_PAGE_SIZE } from "@/constants/table";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
@@ -184,7 +184,9 @@ export default function RekapLogbookPage() {
           header: "Tanggal",
           accessorKey: "date",
           formatter: (value) =>
-            value ? dayjs(value).locale("id").format("DD MMM YYYY - HH:mm") : "-",
+            value
+              ? dayjs(value).locale("id").format("DD MMM YYYY - HH:mm")
+              : "-",
         },
         { header: "PPDS", accessorKey: "ppds" },
         { header: "NIM", accessorKey: "nim" },
@@ -376,6 +378,20 @@ export default function RekapLogbookPage() {
       header: "Title",
       size: 200,
       cell: ({ row: { original } }) => original.title ?? "-",
+    },
+    {
+      accessorKey: "attachment",
+      header: "Attachment",
+      size: 200,
+      cell: ({ row: { original } }) => {
+        const attachments = (original.attachment as string)
+          ?.split(";")
+          .filter(Boolean);
+
+        return attachments?.length
+          ? attachments.map(() => "image").join(" | ")
+          : "-";
+      },
     },
     {
       accessorKey: "patient",
