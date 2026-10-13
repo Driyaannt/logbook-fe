@@ -10,7 +10,7 @@ import type { Row } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { icons } from "@/assets/images/Icon";
 import useWindowDimensions from "@/hooks/useWindowDimension";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DEFAULT_PAGE_SIZE } from "@/constants/table";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
