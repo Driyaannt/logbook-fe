@@ -158,6 +158,7 @@ export type TRekapLogbookItem = {
   treatment: Nullable<string>;
   patient: Nullable<string>;
   title: Nullable<string>;
+  notes: Nullable<string>;
 };
 
 export interface IRekapLogbookListParams {

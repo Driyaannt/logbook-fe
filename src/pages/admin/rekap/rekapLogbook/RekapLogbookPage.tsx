@@ -44,7 +44,7 @@ export default function RekapLogbookPage() {
   // select
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
   const [isLoadingFormStase, setIsLoadingFormStase] = useState<boolean>(false);
-  console.log({ selectedIds });
+  // console.log({ selectedIds });
 
   // Export state
   const [showExportModal, setShowExportModal] = useState(false);
