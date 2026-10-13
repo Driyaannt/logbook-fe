@@ -1,5 +1,7 @@
 import { CardWrapper } from "@/components/card/cardWrapper";
 import { StatusBadge } from "@/components/statusBadge";
+import { getFileIcon, isImageFile } from "@/functions/getFileIcon";
+import { openAttachment } from "@/functions/openAttachment";
 import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
 import { useMemo } from "react";
@@ -19,6 +21,7 @@ export const Kegiatan = ({ data }: Props) => {
       .filter(Boolean)
       .map((item) => {
         const url = `${baseUrl}/_file${item.split("_file")[1]}`;
+        const name = decodeURIComponent(item.split("/").pop() || "Attachment");
 
         let type: "attachmentBefore" | "attachmentAfter" | "attachment" =
           "attachment";
@@ -31,8 +34,9 @@ export const Kegiatan = ({ data }: Props) => {
 
         return {
           url,
-          name: item.split("/").pop() || "Attachment",
+          name,
           type,
+          isImage: isImageFile(name),
         };
       });
   }, [data?.attachment]);
@@ -54,15 +58,37 @@ export const Kegiatan = ({ data }: Props) => {
 
   const renderAttachments = (items: typeof attachments) =>
     items.length > 0 ? (
-      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
-        {items.map(({ url, name }) => (
-          <img
-            key={url}
-            src={url}
-            alt={name}
-            className="w-full sm:w-[240px] h-auto rounded-lg border cursor-pointer object-cover"
-            onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
-          />
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
+        {items.map(({ url, name, isImage }) => (
+          <div key={url} className="w-full sm:w-[240px]">
+            {isImage ? (
+              <img
+                src={url}
+                alt={name}
+                className="w-full h-auto rounded-lg border cursor-pointer object-cover"
+                onClick={() =>
+                  window.open(url, "_blank", "noopener,noreferrer")
+                }
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => openAttachment(url, name)}
+                className="flex items-center gap-3 w-full min-h-[76px] p-3 rounded-lg border text-left hover:bg-gray-50 transition-colors"
+              >
+                {getFileIcon(name)}
+
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-800 truncate">
+                    {name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {name.split(".").pop()?.toUpperCase()} · Buka file
+                  </p>
+                </div>
+              </button>
+            )}
+          </div>
         ))}
       </div>
     ) : (
