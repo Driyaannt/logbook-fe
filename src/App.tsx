@@ -46,8 +46,8 @@ import {
   HospitalFormPage,
   MorbidityListPage,
   MorbidityByUserPage,
+  MorbidityByUserDetailPage,
 } from "@/pages";
-import MorbidityByUserDetailPage from "@/pages/admin/morbidity/morbidityByUserDetail/MorbidityByUserDetailPage";
 
 function App() {
   const { isInitialized } = useAuthStore();
