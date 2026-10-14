@@ -617,18 +617,18 @@ export const BaseTable = <
                         const columnMaxSize = header.column.columnDef.maxSize;
 
                         // Default sizes for different column types
-                        const getDefaultWidth = () => {
-                          const columnId = header.column.id;
-                          if (columnId === "no") return "60px";
-                          if (columnId === "actions") return "auto";
-                          if (columnId === "color") return "100px";
-                          if (columnId === "expansion") return "50px";
-                          return "auto";
-                        };
+                        // const getDefaultWidth = () => {
+                        //   const columnId = header.column.id;
+                        //   if (columnId === "no") return "60px";
+                        //   if (columnId === "actions") return "auto";
+                        //   if (columnId === "color") return "100px";
+                        //   if (columnId === "expansion") return "50px";
+                        //   return "auto";
+                        // };
 
-                        const finalWidth = columnSize
-                          ? `${columnSize}px`
-                          : getDefaultWidth();
+                        // const finalWidth = columnSize
+                        //   ? `${columnSize}px`
+                        //   : getDefaultWidth();
 
                         return (
                           <TableHead
