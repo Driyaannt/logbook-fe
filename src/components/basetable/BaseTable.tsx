@@ -594,7 +594,14 @@ export const BaseTable = <
                   </div>
                 </div>
               )}
-              <Table className="w-full" style={{ tableLayout: "fixed" }}>
+              <Table
+                className="w-full"
+                style={{
+                  tableLayout: "auto",
+                  width: "max-content",
+                  minWidth: "100%",
+                }}
+              >
                 <TableHeader
                   className="sticky top-0 z-20 bg-[#087F5B]"
                   style={{ position: "sticky" }}
@@ -630,13 +637,14 @@ export const BaseTable = <
                               "bg-[#087F5B] text-white font-semibold border-r last:border-r-0 h-12 px-4 text-center",
                             )}
                             style={{
-                              width: finalWidth,
+                              width: columnSize ? `${columnSize}px` : "auto",
                               minWidth: columnMinSize
                                 ? `${columnMinSize}px`
-                                : undefined,
+                                : "max-content",
                               maxWidth: columnMaxSize
                                 ? `${columnMaxSize}px`
                                 : undefined,
+                              whiteSpace: "nowrap",
                             }}
                           >
                             {header.isPlaceholder
