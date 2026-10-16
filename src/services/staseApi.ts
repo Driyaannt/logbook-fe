@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { IStaseUndoPayload, IStaseArchivePayload } from "@/types/stase";
 import type { ApiResponse, ApiPaginationResponse } from "@/types";
 import type { TStaseListItem, TStaseDetail, IStaseListParams, IStaseCreatePayload, IStaseUpdatePayload, TMilestoneMorbiditasUndoInfo } from "@/types/stase";
 
@@ -72,11 +73,9 @@ export const staseApi = {
     }
   },
 
-  async deleteStase(id_logbook: number): Promise<ApiResponse<null>> {
+  async deleteStase(payload: IStaseArchivePayload): Promise<ApiResponse<null>> {
     try {
-      const { data: responseData } = await apiClient.post("RemoveStase", {
-        id_logbook,
-      });
+      const { data: responseData } = await apiClient.post("RemoveStase", payload);
 
       if (responseData.status === false) {
         throw new Error(responseData.message || "Failed to delete");
@@ -177,11 +176,7 @@ export const staseApi = {
   /**
    * Execute undo of milestone/morbiditas semester.
    */
-  async executeMorbiditasUndo(params: {
-    created_by: number;
-    id_client: number;
-    id_user: number;
-  }): Promise<ApiResponse<null>> {
+  async executeMorbiditasUndo(params: IStaseUndoPayload): Promise<ApiResponse<{ archived_logbook_id: number }>> {
     try {
       const { data: responseData } = await apiClient.post(
         "UndoMorbiditasStase",

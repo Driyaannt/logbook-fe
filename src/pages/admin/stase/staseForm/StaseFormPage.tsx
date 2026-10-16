@@ -9,6 +9,7 @@ import { SingleSelect } from "@/components/fields/singleSelect";
 import { SwitchField } from "@/components/fields/switchField";
 import { icons } from "@/assets/images/Icon";
 import type { BasicSelectOpt } from "@/types";
+import type { TMilestoneMorbiditasUndoInfo } from "@/types/stase";
 import {
   staseSchema,
   createInitialStaseValues,
@@ -132,9 +133,9 @@ export default function StaseFormPage() {
     }
   }, [watchedIdStage, fetchSemesterOptions]);
 
-  // Fetch undo info when a PPDS user is selected (create mode only)
+  // Add and Edit preview the selected PPDS's active transition, never the edited card.
   useEffect(() => {
-    if (watchedIdUser && !isEditMode) {
+    if (watchedIdUser) {
       fetchUndoInfo(watchedIdUser);
     } else {
       clearUndoInfo();
@@ -174,13 +175,14 @@ export default function StaseFormPage() {
   ]);
 
   const onSubmit = async (data: StaseFormData) => {
-    if (!data.id_user || !data.id_stase || !data.id_semester || !data.date) {
+    if (!data.id_user || !data.id_stase || !data.id_stage || !data.id_semester || !data.date || isExecutingUndo) {
       return;
     }
 
     const payload = {
       id_user: data.id_user,
       id_stase: data.id_stase,
+      id_stage: data.id_stage!,
       id_semester: data.id_semester,
       date: dayjs(data.date).format("YYYY-MM-DD"),
       id_client: user?.id_client ?? 0,
@@ -215,23 +217,39 @@ export default function StaseFormPage() {
   const { isShown: isShowDelete, toggle: toggleDelete } = useModal();
   // Undo confirmation modal
   const { isShown: isShowUndoConfirm, toggle: toggleUndoConfirm } = useModal();
+  const [confirmedUndo, setConfirmedUndo] = useState<TMilestoneMorbiditasUndoInfo | null>(null);
+  const safeUndo = !!undoInfo?.can_undo && undoInfo.id_user === watchedIdUser && undoInfo.will_archive_transition === true &&
+    [undoInfo.archive_logbook_id, undoInfo.current_session_id, undoInfo.restore_session_id].every(id => Number.isSafeInteger(id) && Number(id) > 0);
+
+  useEffect(() => {
+    setConfirmedUndo(null);
+    toggleUndoConfirm(false);
+  }, [watchedIdUser]);
+
+  const openUndoConfirm = () => {
+    if (!safeUndo || isLoadingUndo || isExecutingUndo) return;
+    setConfirmedUndo({ ...undoInfo! });
+    toggleUndoConfirm(true);
+  };
 
   const handleRefreshUndo = useCallback(() => {
+    setConfirmedUndo(null);
+    toggleUndoConfirm(false);
     if (watchedIdUser) {
       fetchUndoInfo(watchedIdUser);
     }
   }, [watchedIdUser, fetchUndoInfo]);
 
   const handleExecuteUndo = async () => {
-    if (!watchedIdUser) return;
-    const success = await executeUndo(watchedIdUser);
+    if (!watchedIdUser || !confirmedUndo || isExecutingUndo) return;
+    const success = await executeUndo(watchedIdUser, confirmedUndo);
     toggleUndoConfirm(false);
     if (success) {
       showToast("Undo berhasil! Semester & stase dikembalikan.", "success", {
         duration: 3000,
       });
-      // Refresh undo info after successful undo
-      fetchUndoInfo(watchedIdUser);
+      // Store has reloaded the list and PPDS profile; leave any archived Edit card.
+      navigate(ROUTES.stase);
     } else {
       const errorMessage = useStaseStore.getState().undoError;
       showToast(errorMessage ?? "Gagal melakukan undo", "error", {
@@ -284,12 +302,12 @@ export default function StaseFormPage() {
         ]}
         onSave={handleSubmit(onSubmit)}
         onDelete={isEditMode ? () => toggleDelete(true) : undefined}
-        isLoading={isLoading}
+        isLoading={isLoading || isExecutingUndo}
       />
       <div className="flex-1 px-4 sm:px-6 py-4">
         <div className="max-w-4xl mx-auto">
-          {/* Undo Banner — shown when a PPDS user is selected in create mode */}
-          {!isEditMode && watchedIdUser && (isLoadingUndo || undoInfo || undoError) && (
+          {/* Existing amber Undo banner, shared by Add and Edit. */}
+          {watchedIdUser && (isLoadingUndo || undoInfo || undoError) && (
             <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4">
               {isLoadingUndo ? (
                 <div className="flex items-center gap-2 text-amber-700">
@@ -335,7 +353,7 @@ export default function StaseFormPage() {
                       <h4 className="text-sm font-semibold text-amber-900">
                         Undo Ganti Semester — {selectedUserName}
                       </h4>
-                      {undoInfo.can_undo ? (
+                      {safeUndo ? (
                         <>
                           <p className="text-xs text-amber-800">
                             Sekarang:{" "}
@@ -358,22 +376,22 @@ export default function StaseFormPage() {
                             </span>{" "}
                             · Estimasi poin{" "}
                             <span className="font-medium">
-                              {undoInfo.restore_points ?? 0}
+                              {undoInfo.restore_points ?? "—"}
                             </span>
                           </p>
                         </>
                       ) : (
                         <p className="text-xs text-amber-800">
-                          {undoInfo.reason ?? "Tidak dapat melakukan undo."}
+                          {undoInfo.reason ?? "Bukti arsip/token sesi belum tersedia. Refresh atau perbarui backend sebelum Undo."}
                         </p>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 pt-1">
-                    {undoInfo.can_undo && (
+                    {safeUndo && (
                       <button
                         type="button"
-                        onClick={() => toggleUndoConfirm(true)}
+                        onClick={openUndoConfirm}
                         disabled={isExecutingUndo}
                         className="inline-flex items-center gap-1.5 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50 transition-colors"
                       >
@@ -408,7 +426,7 @@ export default function StaseFormPage() {
                     <button
                       type="button"
                       onClick={handleRefreshUndo}
-                      disabled={isLoadingUndo}
+                      disabled={isLoadingUndo || isExecutingUndo}
                       className="inline-flex items-center gap-1 rounded-md border border-amber-400 bg-white px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50 transition-colors"
                     >
                       <icons.RotateCcw className="h-3 w-3" />
@@ -435,6 +453,7 @@ export default function StaseFormPage() {
                     <SingleSelect
                       {...field}
                       options={ppdsSelectOptions}
+                      disabled={isEditMode || isExecutingUndo}
                       value={
                         ppdsSelectOptions.find(
                           (opt) => opt.value === field.value,
@@ -461,6 +480,7 @@ export default function StaseFormPage() {
                     <SingleSelect
                       {...field}
                       options={staseSelectOptions}
+                      disabled={isEditMode || isExecutingUndo}
                       value={
                         staseSelectOptions.find(
                           (opt) => opt.value === field.value,
@@ -489,6 +509,7 @@ export default function StaseFormPage() {
                     <SingleSelect
                       {...field}
                       options={stageSelectOptions}
+                      disabled={isEditMode || isExecutingUndo}
                       value={
                         stageSelectOptions.find(
                           (opt) => opt.value === field.value,
@@ -520,6 +541,7 @@ export default function StaseFormPage() {
                     <SingleSelect
                       {...field}
                       options={semesterSelectOptions}
+                      disabled={isEditMode || isExecutingUndo}
                       value={
                         semesterSelectOptions.find(
                           (opt) => opt.value === field.value,
@@ -616,7 +638,8 @@ export default function StaseFormPage() {
         isShown={isShowUndoConfirm}
         toggle={toggleUndoConfirm}
         title="Konfirmasi Undo Semester"
-        description={`Anda akan mengembalikan semester dari "${undoInfo?.current_semester_name ?? ""}" ke "${undoInfo?.restore_semester_name ?? ""}" / "${undoInfo?.restore_stase_name ?? ""}". Aksi ini akan memulihkan poin sebelumnya. Lanjutkan?`}
+        isLoading={isExecutingUndo}
+        description={`Kartu transisi #${confirmedUndo?.archive_logbook_id ?? ""} (${confirmedUndo?.archive_semester_name ?? ""} / ${confirmedUndo?.archive_stase_name ?? ""}) akan diarsipkan. Profil kembali ke ${confirmedUndo?.restore_semester_name ?? ""} / ${confirmedUndo?.restore_stase_name ?? ""}, poin ${confirmedUndo?.restore_points ?? "—"}. Kartu lama dan aktivitas lain tetap tersimpan. Lanjutkan?`}
         onConfirm={handleExecuteUndo}
         confirmText="Ya, Undo"
         cancelText="Batal"

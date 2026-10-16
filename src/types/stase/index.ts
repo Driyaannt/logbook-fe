@@ -30,6 +30,7 @@ export type TStaseDetail = {
 };
 
 export interface IStaseCreatePayload {
+  id_stage: number;
   id_client: number;
   id_user: number;
   id_stase: number;
@@ -41,6 +42,14 @@ export interface IStaseCreatePayload {
 }
 
 export interface TMilestoneMorbiditasUndoInfo {
+  archive_logbook_id?: number;
+  current_session_id?: number;
+  restore_session_id?: number;
+  will_archive_transition?: boolean;
+  archive_semester_name?: string;
+  archive_stase_name?: string;
+  archive_created_date?: string;
+  archive_activity_date?: string;
   id_user: number;
   display_name?: string;
   can_undo: boolean;
@@ -55,6 +64,21 @@ export interface TMilestoneMorbiditasUndoInfo {
   restore_stage_id?: number;
   restore_stage_name?: string;
   restore_points?: number;
+}
+
+export interface IStaseUndoPayload {
+  created_by: number;
+  id_client: number;
+  id_user: number;
+  id_logbook: number;
+  expected_current_session_id: number;
+  expected_restore_session_id: number;
+}
+
+export interface IStaseArchivePayload {
+  id_logbook: number;
+  created_by: number;
+  id_client: number;
 }
 
 export interface IStaseUpdatePayload extends Omit<

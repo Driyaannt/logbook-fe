@@ -48,7 +48,7 @@ export interface StaseActions {
   cancelExport: () => void;
   // Undo actions
   fetchUndoInfo: (id_user: number) => Promise<void>;
-  executeUndo: (id_user: number) => Promise<boolean>;
+  executeUndo: (id_user: number, confirmed: TMilestoneMorbiditasUndoInfo) => Promise<boolean>;
   clearUndoInfo: () => void;
   reset: () => void;
   resetDetail: () => void;
