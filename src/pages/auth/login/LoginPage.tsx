@@ -55,10 +55,18 @@ export const LoginPage = () => {
         <div className="w-full max-w-md">
           {/* Mobile Logo (visible only on mobile) */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <img src={orthoLogo} alt="Logo UNS Orthopaedi" className="h-16 w-16 object-contain" />
+            <img
+              src={orthoLogo}
+              alt="Logo UNS Orthopaedi"
+              className="h-20 w-20 object-contain"
+            />
             <div className="flex flex-col gap-1.5">
-              <span className="text-2xl font-bold leading-none tracking-tight text-[#04563D]">Logbook</span>
-              <span className="text-xs font-semibold uppercase leading-none tracking-[0.22em] text-[#087F5B]">Medlink</span>
+              <span className="text-3xl font-bold leading-none tracking-tight text-[#04563D]">
+                MEDIC LINK
+              </span>
+              <span className="text-sm font-semibold uppercase leading-none tracking-[0.22em] text-[#087F5B]">
+                LOGBOOK
+              </span>
             </div>
           </div>
 

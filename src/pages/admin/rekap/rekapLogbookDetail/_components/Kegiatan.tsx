@@ -1,12 +1,100 @@
 import { CardWrapper } from "@/components/card/cardWrapper";
 import { StatusBadge } from "@/components/statusBadge";
+import { getFileIcon, isImageFile } from "@/functions/getFileIcon";
+import { openAttachment } from "@/functions/openAttachment";
+import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
+import { useMemo } from "react";
 
 interface Props {
   data: any;
 }
 
 export const Kegiatan = ({ data }: Props) => {
+  const attachments = useMemo(() => {
+    if (!data?.attachment) return [];
+
+    const baseUrl = import.meta.env.VITE_API_URL.split("/index.php")[0];
+
+    return (data.attachment as string)
+      .split(";")
+      .filter(Boolean)
+      .map((item) => {
+        const url = `${baseUrl}/_file${item.split("_file")[1]}`;
+        const name = decodeURIComponent(item.split("/").pop() || "Attachment");
+
+        let type: "attachmentBefore" | "attachmentAfter" | "attachment" =
+          "attachment";
+
+        if (item.includes("/attachment-before/")) {
+          type = "attachmentBefore";
+        } else if (item.includes("/attachment-after/")) {
+          type = "attachmentAfter";
+        }
+
+        return {
+          url,
+          name,
+          type,
+          isImage: isImageFile(name),
+        };
+      });
+  }, [data?.attachment]);
+
+  const action = (data?.action as string)?.toUpperCase();
+
+  const isOperationAction = [
+    "KEGIATAN KAMAR OPERASI",
+    "BIMBINGAN OPERASI",
+  ].includes(action ?? "");
+
+  const attachmentBefore = attachments.filter(
+    (item) => item.type === "attachmentBefore",
+  );
+
+  const attachmentAfter = attachments.filter(
+    (item) => item.type === "attachmentAfter",
+  );
+
+  const renderAttachments = (items: typeof attachments) =>
+    items.length > 0 ? (
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
+        {items.map(({ url, name, isImage }) => (
+          <div key={url} className="w-full sm:w-[240px]">
+            {isImage ? (
+              <img
+                src={url}
+                alt={name}
+                className="w-full h-auto rounded-lg border cursor-pointer object-cover"
+                onClick={() =>
+                  window.open(url, "_blank", "noopener,noreferrer")
+                }
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => openAttachment(url, name)}
+                className="flex items-center gap-3 w-full min-h-[76px] p-3 rounded-lg border text-left hover:bg-gray-50 transition-colors"
+              >
+                {getFileIcon(name)}
+
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-800 truncate">
+                    {name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {name.split(".").pop()?.toUpperCase()} · Buka file
+                  </p>
+                </div>
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    ) : (
+      <span className="text-sm font-medium text-gray-800">-</span>
+    );
+
   return (
     <CardWrapper
       title="Kegiatan"
@@ -71,41 +159,43 @@ export const Kegiatan = ({ data }: Props) => {
           {data?.treatment ?? "-"}
         </span>
       </div>
-      {data?.attachment ? (
-        <div className="flex flex-col gap-2 sm:col-span-2">
-          <span className="text-sm text-gray-500 w-24">Catatan</span>
-          <div className="flex flex-col w-1/2 gap-2">
-            {(data.attachment as string).split(";").map((item: string) => {
-              let url =
-                import.meta.env.VITE_API_URL.split("/index.php")[0] +
-                "/_file" +
-                item.split("_file")[1];
 
-              return (
-                <img
-                  src={url}
-                  alt="img"
-                  className="w-full h-auto"
-                  onClick={() =>
-                    window.open(
-                      url,
-                      "_blank", // <- This is what makes it open in a new window.
-                    )
-                  }
-                />
-              );
-            })}
+      {data?.action &&
+        (data?.action as string).toLocaleUpperCase() !== "MORBIDITAS" && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500 w-24">Catatan</span>
+            <span className="text-sm font-medium text-gray-800">
+              {data?.notes ?? "-"}
+            </span>
           </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500 w-24">Catatan</span>
-          <div className="bg-red-200">hai</div>
-          <span className="text-sm font-medium text-gray-800">
-            {data?.attachment ?? "-"}
-          </span>
-        </div>
-      )}
+        )}
+
+      <div
+        className={cn(
+          "flex flex-col gap-2 sm:col-span-2",
+          attachments.length === 0 && !isOperationAction && "flex-row",
+        )}
+      >
+        <span className="text-sm text-gray-500 w-24 shrink-0">Attachment</span>
+
+        {isOperationAction ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+            <div className="flex flex-col gap-2">
+              <span className="text-sm text-gray-500">Attachment Before</span>
+              {renderAttachments(attachmentBefore)}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <span className="text-sm text-gray-500">Attachment After</span>
+              {renderAttachments(attachmentAfter)}
+            </div>
+          </div>
+        ) : (
+          renderAttachments(
+            attachments.filter((item) => item.type === "attachment"),
+          )
+        )}
+      </div>
     </CardWrapper>
   );
 };

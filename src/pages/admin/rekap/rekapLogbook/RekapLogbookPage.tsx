@@ -44,7 +44,7 @@ export default function RekapLogbookPage() {
   // select
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
   const [isLoadingFormStase, setIsLoadingFormStase] = useState<boolean>(false);
-  console.log({ selectedIds });
+  // console.log({ selectedIds });
 
   // Export state
   const [showExportModal, setShowExportModal] = useState(false);
@@ -184,7 +184,9 @@ export default function RekapLogbookPage() {
           header: "Tanggal",
           accessorKey: "date",
           formatter: (value) =>
-            value ? dayjs(value).locale("id").format("DD MMM YYYY - HH:mm") : "-",
+            value
+              ? dayjs(value).locale("id").format("DD MMM YYYY - HH:mm")
+              : "-",
         },
         { header: "PPDS", accessorKey: "ppds" },
         { header: "NIM", accessorKey: "nim" },
@@ -376,6 +378,20 @@ export default function RekapLogbookPage() {
       header: "Title",
       size: 200,
       cell: ({ row: { original } }) => original.title ?? "-",
+    },
+    {
+      accessorKey: "attachment",
+      header: "Attachment",
+      size: 200,
+      cell: ({ row: { original } }) => {
+        const attachments = (original.attachment as string)
+          ?.split(";")
+          .filter(Boolean);
+
+        return attachments?.length
+          ? attachments.map(() => "image").join(" | ")
+          : "-";
+      },
     },
     {
       accessorKey: "patient",

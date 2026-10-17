@@ -1,12 +1,34 @@
 import { CardWrapper } from "@/components/card/cardWrapper";
+import { getFileIcon, isImageFile } from "@/functions/getFileIcon";
+import { openAttachment } from "@/functions/openAttachment";
+import { cn } from "@/lib/utils";
 import { TMorbidityByUserDetail } from "@/types/morbidity";
 import dayjs from "dayjs";
+import { useMemo } from "react";
 
 interface Props {
   data: TMorbidityByUserDetail | null;
 }
 
 export const Detail = ({ data }: Props) => {
+  const lampiran = useMemo(() => {
+    if (!data?.lampiran || data.lampiran.trim() === "-") return null;
+
+    const url =
+      `${import.meta.env.VITE_API_URL.split("/index.php")[0]}/_file` +
+      data.lampiran.split("_file")[1];
+
+    const name = decodeURIComponent(
+      data.lampiran.split("/").pop() || "Lampiran",
+    );
+
+    return {
+      url,
+      name,
+      isImage: isImageFile(name),
+    };
+  }, [data?.lampiran]);
+
   return (
     <CardWrapper
       title="Detail"
@@ -83,41 +105,46 @@ export const Detail = ({ data }: Props) => {
         </span>
       </div>
 
-      {data?.lampiran ? (
-        <div className="flex flex-col gap-2 sm:col-span-2">
-          <span className="text-sm text-gray-500 w-24">
-            Lampiran (Opsional)
-          </span>
-          <div className="flex flex-col w-1/2 gap-2">
-            <img
-              src={
-                import.meta.env.VITE_API_URL.split("/index.php")[0] +
-                "/_file" +
-                data?.lampiran.split("_file")[1]
-              }
-              alt="img"
-              className="w-full h-auto"
-              onClick={() =>
-                window.open(
-                  import.meta.env.VITE_API_URL.split("/index.php")[0] +
-                    "/" +
-                    data?.lampiran,
-                  "_blank", // <- This is what makes it open in a new window.
-                )
-              }
-            />
+      <div
+        className={cn(
+          "flex flex-col gap-2 sm:col-span-2",
+          !lampiran && "flex-row",
+        )}
+      >
+        <span className="text-sm text-gray-500 w-24">Lampiran (Opsional)</span>
+
+        {lampiran ? (
+          <div className="w-full">
+            {lampiran.isImage ? (
+              <img
+                src={lampiran.url}
+                alt={lampiran.name}
+                className="w-full sm:w-[240px] h-auto rounded-lg border cursor-pointer object-cover"
+                onClick={() => openAttachment(lampiran.url, lampiran.name)}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => openAttachment(lampiran.url, lampiran.name)}
+                className="flex items-center gap-3 w-full min-h-[76px] p-3 rounded-lg border text-left hover:bg-gray-50 transition-colors"
+              >
+                {getFileIcon(lampiran.name)}
+
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-800 truncate">
+                    {lampiran.name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {lampiran.name.split(".").pop()?.toUpperCase()} · Buka file
+                  </p>
+                </div>
+              </button>
+            )}
           </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2 col-span-1 sm:col-span-2">
-          <span className="text-sm text-gray-500 w-24">
-            Lampiran (Opsional)
-          </span>
-          <span className="text-sm font-medium text-gray-800">
-            {data?.lampiran ?? "-"}
-          </span>
-        </div>
-      )}
+        ) : (
+          <span className="text-sm font-medium text-gray-800">-</span>
+        )}
+      </div>
       <div></div>
     </CardWrapper>
   );

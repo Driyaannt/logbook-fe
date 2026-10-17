@@ -21,6 +21,7 @@ export interface IMorbidityListParams {
 
 export interface IMorbidityByUserListParams extends IMorbidityListParams {
   id_user?: number;
+  status?: string;
 }
 
 export type TMorbidityByUser = {
