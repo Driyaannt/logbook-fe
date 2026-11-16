@@ -22,7 +22,6 @@ import {
   exportToExcel,
   exportToPDF,
   ExportColumn,
-  ExportSummaryRow,
 } from "@/functions/export";
 import { useUrlParams } from "@/hooks/useUrlParams";
 import type { TRekapLogbookItem } from "@/types/rekap";
