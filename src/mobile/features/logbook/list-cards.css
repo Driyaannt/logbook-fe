@@ -14,6 +14,7 @@
 .mweb-logbook .mweb-list-info{display:flex;flex-direction:column;gap:6px}
 .mweb-logbook .mweb-list-info-row{display:grid;grid-template-columns:20px 44px minmax(0,1fr);gap:6px;align-items:start;color:#164B3C;font-size:13px;line-height:19px;font-weight:600;overflow-wrap:anywhere}
 .mweb-logbook .mweb-list-info-row>svg{display:block;margin-top:2px}
+.mweb-logbook .mweb-list-card:has([data-list-key="category"]) .mweb-list-info-row{grid-template-columns:20px 58px minmax(0,1fr)}
 .mweb-logbook .mweb-list-label{color:#667085;font-size:12px;font-weight:400}
 .mweb-logbook .mweb-list-tone-pending,.mweb-logbook .mweb-list-tone-remidi{--list-tone:#B54708;--list-soft:#FFF4E8}
 .mweb-logbook .mweb-list-tone-rejected,.mweb-logbook .mweb-list-tone-tidak-lolos{--list-tone:#D92D20;--list-soft:#FEECEE}

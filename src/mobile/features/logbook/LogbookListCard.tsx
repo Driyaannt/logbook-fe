@@ -1,4 +1,4 @@
-import { CalendarDays, MapPin, UserRound, CircleCheck, RotateCcw, CircleX, CircleHelp } from 'lucide-react';
+import { CalendarDays, MapPin, UserRound, Shapes, CircleCheck, RotateCcw, CircleX, CircleHelp } from 'lucide-react';
 import type { Row } from './model';
 import {enabled,getDynamicCategories} from './dynamicLogbookForm';
 import { buildListPresentation } from './listPresentation';
@@ -10,6 +10,7 @@ export default function LogbookListCard({action,record,role,groupedEntry=false,o
   const category=getDynamicCategories(action).find(c=>c.id===Number(record.id_category??record.m_action_category?.id));
   const StatusIcon=card.status.icon==='check'?CircleCheck:card.status.icon==='retry'?RotateCcw:card.status.icon==='failed'?CircleX:CircleHelp;
   const SecondaryIcon=card.secondaryIcon==='location'?MapPin:CalendarDays;
+  const categoryRow=(enabled(record.m_action_category?.is_other)||category?.is_other) && <span className="mweb-list-info-row"><Shapes size={16} aria-hidden="true"/><span className="mweb-list-label">Kategori :</span><span data-list-key="category">{record.m_action_category?.name??category?.label}</span></span>;
   return <button type="button" className={`mweb-card mweb-record-card mweb-list-card mweb-list-${card.kind} mweb-list-tone-${card.status.tone}`} onClick={onOpen}>
     <span className="mweb-list-top">
       <span className="mweb-list-heading">
@@ -18,10 +19,11 @@ export default function LogbookListCard({action,record,role,groupedEntry=false,o
       </span>
       <span className="mweb-list-status"><StatusIcon size={15} aria-hidden="true"/><span data-list-key="status">{card.status.label}</span></span>
     </span>
-    {(enabled(record.m_action_category?.is_other)||category?.is_other) && <span className="mweb-list-subheadline">Keterangan kategori: {record.m_action_category?.name??category?.label}</span>}
     {card.kind==='bimbingan-entry'&&<span data-list-key="subheadline" className="mweb-list-subheadline">{card.subheadline}</span>}
+    {card.kind==='bimbingan-entry'&&categoryRow}
     {card.kind==='record'&&<span className="mweb-list-info">
       <span className="mweb-list-info-row"><UserRound size={16} aria-hidden="true"/><span className="mweb-list-label">{card.primaryLabel}</span><span data-list-key="primary">{card.primary}</span></span>
+      {categoryRow}
       <span className="mweb-list-info-row"><SecondaryIcon size={16} aria-hidden="true"/><span className="mweb-list-label">{card.secondaryLabel}</span><span data-list-key="secondary">{card.secondary}</span></span>
     </span>}
   </button>;

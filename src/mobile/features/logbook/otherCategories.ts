@@ -19,18 +19,21 @@ export function groupedCategoryCards(
   const ids = otherCategoryIds(action),
     ordinary = counts.filter((c) => !ids.has(c.id)),
     others = counts.filter((c) => ids.has(c.id));
-  return ids.size || enabled(action.allow_other_categories)
+  return (ids.size || enabled(action.allow_other_categories)
     ? [
         ...ordinary,
         {
-          id: "other",
+          id: "other" as const,
           label: "Lainnya",
           count: others.reduce((s, c) => s + c.count, 0),
           presentation: others.reduce((s, c) => s + c.presentation, 0),
           presented: others.reduce((s, c) => s + c.presented, 0),
         },
       ]
-    : ordinary;
+    : ordinary).sort(
+    (left, right) =>
+      right.count - left.count || left.label.localeCompare(right.label),
+  );
 }
 export function mergeSavedCategory(
   action: DynamicLogbookAction,
