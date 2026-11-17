@@ -6,6 +6,7 @@ export interface ExportColumn<T> {
   header: string;
   accessorKey?: keyof T | string;
   formatter?: (value: any, row: T) => string;
+  pdfWidth?: number;
 }
 
 export type ExportSummaryRow = {
@@ -296,4 +297,17 @@ export async function exportToExcel<T extends Record<string, any>>(
     console.error("Error exporting Excel:", error);
     throw error;
   }
+}
+
+/**
+ * Export data to a paginated, landscape PDF file.
+ */
+export async function exportToPDF<T>(
+  options: ExportOptions<T> & {
+    onProgress?: (progress: number) => void;
+    signal?: AbortSignal;
+  },
+) {
+  const { exportPDFDocument } = await import("./export-pdf");
+  return exportPDFDocument(options);
 }

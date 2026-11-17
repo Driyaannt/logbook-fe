@@ -17,7 +17,12 @@ import "dayjs/locale/id";
 import { showToast } from "@/utils/toast";
 import { ExportModal } from "@/components/exportModal/ExportModal";
 import { ExportFormat } from "@/components/exportButton";
-import { exportToCSV, exportToExcel, ExportColumn } from "@/functions/export";
+import {
+  exportToCSV,
+  exportToExcel,
+  exportToPDF,
+  ExportColumn,
+} from "@/functions/export";
 import { useUrlParams } from "@/hooks/useUrlParams";
 import type { TRekapLogbookItem } from "@/types/rekap";
 import { StatusBadge } from "@/components/statusBadge";
@@ -179,31 +184,36 @@ export default function RekapLogbookPage() {
 
       // Define columns for export
       const exportColumns: ExportColumn<TRekapLogbookItem>[] = [
-        { header: "No", accessorKey: "no" },
+        { header: "No", accessorKey: "no", pdfWidth: 3 },
         {
           header: "Tanggal",
           accessorKey: "date",
+          pdfWidth: 7,
           formatter: (value) =>
             value
               ? dayjs(value).locale("id").format("DD MMM YYYY - HH:mm")
               : "-",
         },
-        { header: "PPDS", accessorKey: "ppds" },
-        { header: "NIM", accessorKey: "nim" },
-        { header: "Semester", accessorKey: "semester" },
-        { header: "Stase", accessorKey: "stase" },
-        { header: "PIN", accessorKey: "pin" },
-        { header: "Staff Pengajar/DPJP", accessorKey: "staff" },
-        { header: "Activity", accessorKey: "action" },
-        { header: "Peran", accessorKey: "peran" },
-        { header: "Category", accessorKey: "category" },
-        { header: "Title", accessorKey: "title" },
-        { header: "Catatan", accessorKey: "notes" },
-        { header: "Patient", accessorKey: "patient" },
-        { header: "Diagnosis", accessorKey: "diagnosis" },
-        { header: "Treatment", accessorKey: "treatment" },
-        { header: "EMR Number", accessorKey: "emr_number" },
-        { header: "Status", accessorKey: "status" },
+        { header: "PPDS", accessorKey: "ppds", pdfWidth: 7 },
+        { header: "NIM", accessorKey: "nim", pdfWidth: 4 },
+        { header: "Semester", accessorKey: "semester", pdfWidth: 3 },
+        { header: "Stase", accessorKey: "stase", pdfWidth: 5 },
+        { header: "PIN", accessorKey: "pin", pdfWidth: 4 },
+        {
+          header: "Staff Pengajar/DPJP",
+          accessorKey: "staff",
+          pdfWidth: 7,
+        },
+        { header: "Activity", accessorKey: "action", pdfWidth: 5 },
+        { header: "Peran", accessorKey: "peran", pdfWidth: 4 },
+        { header: "Category", accessorKey: "category", pdfWidth: 4 },
+        { header: "Title", accessorKey: "title", pdfWidth: 6 },
+        { header: "Catatan", accessorKey: "notes", pdfWidth: 9 },
+        { header: "Patient", accessorKey: "patient", pdfWidth: 6 },
+        { header: "Diagnosis", accessorKey: "diagnosis", pdfWidth: 8 },
+        { header: "Treatment", accessorKey: "treatment", pdfWidth: 8 },
+        { header: "EMR Number", accessorKey: "emr_number", pdfWidth: 5 },
+        { header: "Status", accessorKey: "status", pdfWidth: 5 },
       ];
 
       // Prepare data with index number
@@ -226,6 +236,15 @@ export default function RekapLogbookPage() {
           columns: exportColumns,
           filename: `${filename}.xlsx`,
           sheetName: "Rekap Logbook Export",
+        });
+      } else if (format === "pdf") {
+        setExportProgress(0);
+        await exportToPDF({
+          data: dataWithIndex,
+          columns: exportColumns,
+          filename: `${filename}.pdf`,
+          onProgress: setExportProgress,
+          signal: exportControllerRef.current.signal,
         });
       }
 
@@ -455,6 +474,7 @@ export default function RekapLogbookPage() {
         onExport={handleExport}
         onSearch={handleSearch}
         isLoading={isExportingLogbook}
+        exportFormats={["csv", "excel", "pdf"]}
         initialSearchValue={search}
       />
       <div className="flex-1 px-4 sm:px-6 py-2 overflow-hidden">

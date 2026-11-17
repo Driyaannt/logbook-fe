@@ -12,6 +12,7 @@ import { BaseTable } from "@/components/basetable/BaseTable";
 import { BaseTableSpan } from "@/components/baseTableSpan/BaseTableSpan";
 import { ConfirmationModal } from "@/components/confirmationModal";
 import { ExportButton } from "@/components/exportButton";
+import type { ExportFormat } from "@/components/exportButton";
 import { LeafletMap } from "@/components/leafletMap";
 import { TurnstileWidget } from "@/components/turnstile";
 import { BarChart } from "@/components/chart/barChart";
@@ -44,7 +45,7 @@ export default function ExamplePage() {
     ? `Last export: ${selectedFormat.toUpperCase()}`
     : "No export yet";
 
-  const handleExport = async (format: "csv" | "excel") => {
+  const handleExport = async (format: ExportFormat) => {
     setSelectedExportFormat(format);
     setExportLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 700));
