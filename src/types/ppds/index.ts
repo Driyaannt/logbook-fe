@@ -84,6 +84,9 @@ export type TPpdsLogbook = {
 };
 
 export interface IPpdsLogbookListParams {
+  id_category?: Nullable<number>;
+  category_group?: 'other';
+  is_presentation?: boolean;
   id_client: number;
   page?: number;
   limit?: number;
@@ -118,6 +121,8 @@ export interface IPpdsChangePasswordPayload {
 // Types for PPDS Logbook Detail (matches GetDetailPPDSLogbook API response)
 export interface TPpdsLogbookDetail {
   id: number;
+  category_name?: Nullable<string>;
+  is_other?: boolean;
   // user
   ppds_name: string;
   nim: Nullable<string>;

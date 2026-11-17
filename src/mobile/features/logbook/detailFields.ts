@@ -12,7 +12,9 @@ export function detailActionKey(action:DynamicLogbookAction) {return isDetailExa
 export function buildDetailFields(action:DynamicLogbookAction,record:Row,role:UserRole):DetailField[] {
   const family=detailActionKey(action),morbid=family==='morbiditas';
   const schema=DETAIL_SCHEMAS[family]??{admin:['participant','date','notes'],staff:['participant','date','notes'],ppds:['staff','date','notes']};
-  const keys=schema[role==='institution-admin'?'admin':role];
+  const schemaKeys=schema[role==='institution-admin'?'admin':role];
+  const isOther=enabled(record.m_action_category?.is_other)||getDynamicCategories(action).find(c=>c.id===Number(record.id_category??record.m_action_category?.id))?.is_other;
+  const keys=isOther&&!schemaKeys.includes('category')?[...schemaKeys,'category']:schemaKeys;
   const emr=arr(record.t_logbook_emr)[0]??{};
   const relation=(nested:string,id:string,choices:{id:number;label:string}[],...aliases:string[])=>{
     const direct=detailValue(record,`${nested}.name`,`${nested}.role_name`,`${nested}.0.name`,`${nested}.0.role_name`,...aliases);
@@ -32,7 +34,7 @@ export function buildDetailFields(action:DynamicLogbookAction,record:Row,role:Us
     treatment:['Tindakan',detailValue(emr,'treatment'),true,true],
     notes:[morbid?'Kronologi Morbiditas':'Catatan',detailValue(record,'notes','note','catatan'),false,true],
     hospital:['Rumah Sakit',relation('m_hospital','id_hospital',getDynamicHospitals(action),'hospital','rumah_sakit')],
-    category:['Kategori',morbid&&points!=null&&Number.isFinite(Number(points))?`${category} (${Number(points)})`:category],
+    category:[enabled(record.m_action_category?.is_other)||getDynamicCategories(action).find(c=>c.id===Number(record.id_category))?.is_other?'Keterangan kategori':'Kategori',morbid&&points!=null&&Number.isFinite(Number(points))?`${category} (${Number(points)})`:category],
     title:['Judul',detailValue(record,'title','judul','m_action.name'),false,true],
     location:['Location',detailValue(record,'location','lokasi')],
     presentation:['Presentasi',record.is_presentation===true?'Ya':record.is_presentation===false?'Tidak':'-'],

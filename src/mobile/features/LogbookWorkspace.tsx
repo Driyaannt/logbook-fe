@@ -30,8 +30,9 @@ import { AttachmentPreview } from './logbook/AttachmentFields';
 import './logbook/logbook.css';
 import './logbook/form-layout.css';
 import { installDirtyNavigationGuard } from './logbook/dirtyNavigation';
+import { groupedCategoryCards, otherCategoryIds, type CategoryGroup } from './logbook/otherCategories';
 import { categoryAggregates, type CategoryAggregate } from './logbook/categoryAggregates';
-import { assertReadScope, filterWireFields, isBimbinganRead, nativeFilters, ppdsChoices, readFilterPayload, readRequestRole } from './logbook/readContracts';
+import { assertReadScope, filterWireFields, isBimbinganRead, nativeFilters, ppdsChoices, readFilterPayload, readRequestRole, shouldGroupLogbooks } from './logbook/readContracts';
 import { applyActionLogbookFilters, distinctFilterChoices } from './logbook/actionLogbookFilters';
 import { summarizeBimbinganOperasiCategories } from './logbook/bimbinganOperasiGrouping';
 export type LogbookWorkspaceProps = {
@@ -90,7 +91,7 @@ export default function LogbookWorkspace(props: LogbookWorkspaceProps) {
   useEffect(()=>{if(user && mode==='list' && !explore && positiveId(actionId))auditScreenVisit(filterOpen?'home/dynamic-logbook-filter':'home/dynamic-logbook',Number(actionId));},[filterOpen,mode,explore,actionId,user?.id,user?.id_client]);
   const [filterDraft, setFilterDraft] = useState<Row>({});
   const [serverCategories, setServerCategories] = useState<CategoryAggregate[] | undefined>();
-  const [group, setGroup] = useState<number | undefined>();
+  const [group, setGroup] = useState<CategoryGroup | undefined>();
   const [presentation, setPresentation] = useState(false);
   const [groupComplete, setGroupComplete] = useState(false);
   const [archiveConfirm, setArchiveConfirm] = useState(false);
@@ -124,6 +125,7 @@ export default function LogbookWorkspace(props: LogbookWorkspaceProps) {
     'id_staff_jejaring',
     'id_hospital',
     'id_category',
+    'category_group',
     'id_another_role',
     'id_stase',
     'exam_result',
@@ -136,6 +138,16 @@ export default function LogbookWorkspace(props: LogbookWorkspaceProps) {
         : key === 'is_presentation'
           ? value === 'true'
           : value;
+  }
+  if (role === 'ppds' && search.get('categoryView') === '1') {
+    // Historical folder bookmarks carry navigation-only constraints. Explicit
+    // selections are preserved in groupScope by openGroup; absent provenance
+    // cannot be guessed to be a user filter. Ordinary filter URLs stay intact.
+    for (const key of ['id_category', 'is_presentation', 'category_group']) delete filters[key];
+    const scope = new URLSearchParams(search.get('groupScope') ?? '');
+    if (positiveId(scope.get('id_category'))) filters.id_category = Number(scope.get('id_category'));
+    if (['true', 'false'].includes(scope.get('is_presentation') ?? '')) filters.is_presentation = scope.get('is_presentation') === 'true';
+    if (scope.get('category_group') === 'other') filters.category_group = 'other';
   }
   const base = explore ? `/mobile/explore/${target}/logbooks/${actionId}` : `/mobile/logbooks/${actionId}`;
   const readSuffix = '';
@@ -159,39 +171,42 @@ export default function LogbookWorkspace(props: LogbookWorkspaceProps) {
       const requestedPage=requested>0 ? Math.floor(requested) : 1;
       const requestFilters={...filters};
       if(summary && search.get('categoryView')==='1') {
-        delete requestFilters.id_category;delete requestFilters.is_presentation;
+        delete requestFilters.id_category;delete requestFilters.is_presentation;delete requestFilters.category_group;
         // Persist user-selected filters separately from drilldown constraints so
         // refresh/deep links keep the same count scope as the category root.
         const scope = new URLSearchParams(search.get('groupScope') ?? '');
+        if(scope.get('category_group')==='other')requestFilters.category_group='other';
         if(positiveId(scope.get('id_category')))requestFilters.id_category=Number(scope.get('id_category'));
         if(['true','false'].includes(scope.get('is_presentation') ?? ''))requestFilters.is_presentation=scope.get('is_presentation')==='true';
       }
       const result = resultBody(
-        await mobileRequest(explore && target && !isBimbinganRead(actionMeta) ? 'getLogbookIdCustomer' : 'getLogbook', {
+        await mobileRequest(explore && target && !isBimbinganRead(actionMeta) && !enabled(actionMeta.allow_other_categories) ? 'getLogbookIdCustomer' : 'getLogbook', {
           id_client: user.id_client,
           id_action: Number(actionId),
           role: readRequestRole(user, role),
           user_id: user.id,
-          ...(!(explore && target && !isBimbinganRead(actionMeta)) ? {
+          ...(!(explore && target && !isBimbinganRead(actionMeta) && !enabled(actionMeta.allow_other_categories)) ? {
             page: requestedPage, limit: PAGE_SIZE,
-            ...(isBimbinganRead(actionMeta) ? {category_aggregates:true} : {}),
+            ...(shouldGroupLogbooks(actionMeta, role) && isBimbinganRead(actionMeta) ? {category_aggregates:true} : {}),
             ...readFilterPayload(requestFilters,actionMeta,role),
-            ...(!summary && search.get('categoryView')==='1' ? {id_category:filters.id_category,is_presentation:filters.is_presentation} : {}),
+            ...(requestFilters.category_group==='other'?{category_group:'other'}:{}),
+            ...(!summary && shouldGroupLogbooks(actionMeta, role) && search.get('categoryView')==='1' ? {id_category:filters.id_category,is_presentation:filters.is_presentation} : {}),
           } : {}),
           ...(explore && target ? { customer_id: Number(target) } : {}),
         }),
       );
       if (expected !== generation.current || currentView.current !== viewKey || !sameSession()) return null;
       const parsed = listPage(result, requestedPage, PAGE_SIZE);
+      if(requestFilters.category_group==='other'&&parsed.data.some(r=>!otherCategoryIds(actionMeta).has(Number(r.id_category??r.m_action_category?.id))))throw new Error('Server belum mendukung filter kategori Lainnya. Muat ulang setelah layanan diperbarui.');
       assertReadScope(parsed.data,{id_client:user.id_client,id_action:Number(actionId),...(explore && target ? {targetActor:Number(target)} : {})});
-      if(explore && target && !isBimbinganRead(actionMeta)) {
+      if(explore && target && !isBimbinganRead(actionMeta) && !enabled(actionMeta.allow_other_categories)) {
         parsed.data=applyActionLogbookFilters(parsed.data,nativeFilters(filters,actionMeta,role));
         parsed.total=parsed.data.length;parsed.hasMore=false;
       }
       return {
         ...parsed,
         aggregates: categoryAggregates(result.bimbingan_categories),
-        grouped: (isBimbinganRead(actionMeta) || enabled(actionMeta.is_grouped_by_category)) && role === 'staff',
+        grouped: shouldGroupLogbooks(actionMeta, role),
       };
       // Search is a stable serialization of every list filter.
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -218,8 +233,8 @@ export default function LogbookWorkspace(props: LogbookWorkspaceProps) {
       setPage(1);
       setParticipants([]);
       setGroup(
-        search.get('categoryView') === '1' && positiveId(filters.id_category)
-          ? Number(filters.id_category)
+        search.get('categoryView') === '1' && filters.category_group==='other' ? 'other' : search.get('categoryView') === '1' && positiveId(filters.id_category)
+                  ? Number(filters.id_category)
           : undefined,
       );
       setPresentation(filters.is_presentation === true);
@@ -633,11 +648,12 @@ export default function LogbookWorkspace(props: LogbookWorkspaceProps) {
       mutationLock.current = false;
     }
   }
-  const grouped = !!action && (isBimbinganRead(action) || enabled(action.is_grouped_by_category)) && role === 'staff';
+  const grouped = !!action && shouldGroupLogbooks(action, role);
   const infinite=useInfiniteScroll({enabled:mode==='list' && hasMore && (!grouped || group!==undefined) && !initialLoading && !loading && !busy && !scopedError && !moreError && !preview && !archiveConfirm && !filterOpen,loading:loadingMore,scopeKey:viewKey,progressKey:`${page}:${rows.length}`,onLoadMore:loadMore});
   const filterFields=action ? filterWireFields(action,role) : [];
   const categories = action ? getDynamicCategories(action) : [];
-  const groupedCategories = serverCategories ?? summarizeCategories(categories,rows);
+  const groupedCategories = action ? groupedCategoryCards(action,serverCategories ?? summarizeCategories(categories,rows)) : [];
+  const otherIds=action ? otherCategoryIds(action) : new Set<number>();
   const selectedCategory = groupedCategories.find(c=>c.id===group);
   const presentationCount = selectedCategory?.presentation ?? 0;
   const captionTotal = grouped && group!==undefined && !presentation && groupComplete ? selectedCategory?.count : total;
@@ -645,28 +661,29 @@ export default function LogbookWorkspace(props: LogbookWorkspaceProps) {
     grouped && group !== undefined
       ? rows.filter(
           (r) =>
-            Number(r.id_category ?? r.m_action_category?.id) === group &&
+            (group==='other' ? otherIds.has(Number(r.id_category ?? r.m_action_category?.id)) : Number(r.id_category ?? r.m_action_category?.id) === group) &&
             (presentation ? enabled(r.is_presentation) : !enabled(r.is_presentation)),
         )
       : rows;
-  function openGroup(id?: number, present = false, back = false) {
+  function openGroup(id?: CategoryGroup, present = false, back = false) {
     // Drilldown is URL state even for legacy aggregate responses, so Detail/reload can return here.
     const next = new URLSearchParams(search);
     if (id === undefined) {
       next.delete('categoryView');
+      next.delete('category_group');
       next.delete('id_category');
       next.delete('is_presentation');
       const scope = new URLSearchParams(search.get('groupScope') ?? '');
-      for(const key of ['id_category','is_presentation'])if(scope.has(key))next.set(key,scope.get(key)!);
+      for(const key of ['id_category','is_presentation','category_group'])if(scope.has(key))next.set(key,scope.get(key)!);
       next.delete('groupScope');
     } else {
       if(search.get('categoryView')!=='1') {
         const scope=new URLSearchParams();
-        for(const key of ['id_category','is_presentation'])if(search.has(key))scope.set(key,search.get(key)!);
+        for(const key of ['id_category','is_presentation','category_group'])if(search.has(key))scope.set(key,search.get(key)!);
         if(scope.size)next.set('groupScope',scope.toString());
       }
       next.set('categoryView', '1');
-      next.set('id_category', String(id));
+      if(id==='other'){next.set('category_group','other');const scope=new URLSearchParams(next.get('groupScope')??'');if(scope.has('id_category'))next.set('id_category',scope.get('id_category')!);else next.delete('id_category');}else {next.delete('category_group');next.set('id_category', String(id));}
       next.set('is_presentation', String(present));
     }
     if(back){
@@ -692,7 +709,7 @@ export default function LogbookWorkspace(props: LogbookWorkspaceProps) {
         <button
           className="mweb-back"
           onClick={() => {
-            if (mode === 'list' && group !== undefined) {
+            if (mode === 'list' && grouped && group !== undefined) {
               if (presentation) openGroup(group, false, true);
                             else openGroup(undefined, false, true);
             } else returnBack(mode==='edit' ? `${base}/${recordId}` : recordId ? (!location.state?.mobileReturn ? safeTodoReturn(search.get('returnTo')) : null) ?? `${base}${readSuffix}` : mode==='create' ? base : explore ? `/mobile/explore/${target}` : '/mobile');
@@ -776,6 +793,7 @@ export default function LogbookWorkspace(props: LogbookWorkspaceProps) {
                 <section className="mweb-card mweb-filter-panel">
                   <h2>Filter Kegiatan</h2>
                   <div className="mweb-filter-grid">
+                    {enabled(action.allow_other_categories)&&<label className="mweb-field"><span>Kelompok kategori</span><select aria-label="Kelompok kategori" value={filterDraft.category_group??''} onChange={e=>updateFilter('category_group',e.target.value||undefined)}><option value="">Semua</option><option value="other">Lainnya</option></select></label>}
                     <label className="mweb-field">
                       <span>Dari tanggal</span>
                       <input
@@ -966,7 +984,7 @@ export default function LogbookWorkspace(props: LogbookWorkspaceProps) {
                   <div className="mweb-record-grid">
                     {visible.map((r) => (
                       <LogbookListCard key={r.id} action={action} record={r} role={role}
-                        groupedEntry={grouped && group !== undefined && !presentation}
+                        groupedEntry={grouped && group !== undefined && group !== 'other' && !presentation}
                         onOpen={() => void openListRecord(r)} />
                     ))}
                   </div>

@@ -13,6 +13,7 @@ export const Kegiatan = ({ data }: Props) => {
       title="Kegiatan"
       contentClassName="grid grid-cols-1 sm:grid-cols-2 gap-4"
     >
+      {data?.category_name && <div className="flex items-center gap-2"><span className="text-sm text-gray-500">{data.is_other ? "Keterangan kategori" : "Kategori"}</span><span className="text-sm font-medium text-gray-800">{data.category_name}</span></div>}
       <div className="flex items-center gap-2">
         <span className="text-sm text-gray-500 w-24">Date</span>
         <span className="text-sm font-medium text-gray-800">

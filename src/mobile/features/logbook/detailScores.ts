@@ -30,7 +30,7 @@ const SCORE_FIELD_CONFIGS: Array<{
   },
   {
     key: 'score_affective',
-    label: 'Skor Afektif',
+    label: 'Skor Attitude',
     paramId: 6,
     keywords: ['afektif', 'affective', 'attitude'],
     fallbackPaths: ['score_affective', 'affective_score', 'skor_affective'],
@@ -68,6 +68,7 @@ function isTrueFlag(value: unknown) {
 
 export function shouldShowScoreAssessment(record: GetLogbookItem) {
   const action = record.m_action as Record<string, unknown> | null;
+  if(isTrueFlag(record.m_action_category?.is_other))return !isTrueFlag(action?.is_exam);
   const source = `${action?.identifier ?? ''} ${action?.name ?? ''}`
     .toLowerCase()
     .replace(/[_\s/]+/g, '-');

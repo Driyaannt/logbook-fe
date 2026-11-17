@@ -52,7 +52,7 @@ export default function PpdsLogbookDetailPage() {
         breadcrumbs={[
           { label: isInactive ? "PPDS Nonaktif" : "PPDS", to: ppdsListRoute },
           { label: "Detail", to: ppdsDetailRoute },
-          { label: "Logbook", to: ppdsLogbookRoute },
+          { label: "Logbook", to: ppdsLogbookRoute + location.search },
           { label: "Detail", to: undefined },
         ]}
       />

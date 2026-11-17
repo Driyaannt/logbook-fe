@@ -20,6 +20,7 @@ import { actorKey, captureReturn, navigationSessionKey, readListMemory, readList
 import { useNavigationAudit } from './useNavigationAudit';
 import './mobile.css';
 import './navbar-brand.css';
+import './features/logbook/category-picker.css';
 function LogbookRoute({mode = 'list', explore = false}: {mode?:'list'|'create'|'edit'|'detail';explore?:boolean}) {
   const {actionId,recordId,userId} = useParams();
   const location=useLocation();

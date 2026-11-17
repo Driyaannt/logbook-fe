@@ -78,6 +78,9 @@ export type TStaffLogbook = {
 };
 
 export interface IStaffLogbookListParams {
+  id_category?: Nullable<number>;
+  category_group?: 'other';
+  is_presentation?: boolean;
   id_client: number;
   page?: number;
   limit?: number;
@@ -112,6 +115,8 @@ export interface IStaffChangePasswordPayload {
 // Types for Staff Logbook Detail (matches GetDetailStaffLogbook API response)
 export interface TStaffLogbookDetail {
   id: number;
+  category_name?: Nullable<string>;
+  is_other?: boolean;
   // user
   ppds_name: Nullable<string>;
   nim: Nullable<string>;

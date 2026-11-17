@@ -1,4 +1,4 @@
-import { enabled, getDynamicAsmParams, getDynamicScoreOptions, type DynamicLogbookAction, type UserRole } from './dynamicLogbookForm';
+import { enabled, getDynamicCategories, getDynamicAsmParams, getDynamicScoreOptions, type DynamicLogbookAction, type UserRole } from './dynamicLogbookForm';
 import { shouldShowScoreAssessment } from './detailScores';
 import { verificationFor, type Row } from './model';
 import { ownAssessmentRows } from './assessmentOwnership';
@@ -11,7 +11,7 @@ export function requiresSavedAssessment(record:Row, action:DynamicLogbookAction,
   return !readOnly && role==='staff' && !enabled(savedAction.is_exam) && record.verified!==true && verify.allowed.includes('verified') &&
     ['pending','revised','revision'].includes(String(verify.row?.status??'').trim().toLowerCase()) &&
     !['verified','rejected'].includes(String(record.verified_status||record.status||'').trim().toLowerCase()) &&
-    shouldShowScoreAssessment({...record,m_action:savedAction});
+    shouldShowScoreAssessment({...record,m_action:savedAction,m_action_category:{...getDynamicCategories(action).find(c=>c.id===Number(record.id_category??record.m_action_category?.id)),...record.m_action_category}});
 }
 const definitions = [
   {key:'score_psikomotor',match:/psikomotor|psychomotor/i,legacy:1,current:4},

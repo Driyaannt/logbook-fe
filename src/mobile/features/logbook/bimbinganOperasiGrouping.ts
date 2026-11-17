@@ -20,7 +20,10 @@ export function summarizeBimbinganOperasiCategories(
   const counts = new Map<number, number>();
   const presentationCounts = new Map<number, number>();
   const presentedCounts = new Map<number, number>();
+  const seen=new Set<string>();
   for (const record of records) {
+    if(!Number.isSafeInteger(Number(record.id))||Number(record.id)<=0)continue;
+    if(seen.has(String(record.id)))continue;seen.add(String(record.id));
     const id = Number(record.id_category ?? record.m_action_category?.id);
     if (!Number.isFinite(id)) continue;
     counts.set(id, (counts.get(id) ?? 0) + 1);

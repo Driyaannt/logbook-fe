@@ -25,7 +25,7 @@ export const SkorCatatan = ({ data }: Props) => {
       </div>
       {/* Row 2 */}
       <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-500 w-28">Afektif</span>
+        <span className="text-sm text-gray-500 w-28">Attitude</span>
         <span className="text-sm font-medium text-gray-800">
           {data?.afektif ?? "-"}
         </span>

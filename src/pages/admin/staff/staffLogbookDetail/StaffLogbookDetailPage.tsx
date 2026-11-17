@@ -1,7 +1,7 @@
 import { Topbar } from "@/components/layout/Topbar";
 import { LoadingPage } from "@/components/layout/Loading";
 import { ROUTES } from "@/utils/routes";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { icons } from "@/assets/images/Icon";
 import { useEffect } from "react";
 import { useStaffStore } from "@/store/staffStore";
@@ -10,6 +10,7 @@ import { Kegiatan } from "./_components/Kegiatan";
 import { Staff } from "./_components/Staff";
 
 export default function StaffLogbookDetailPage() {
+  const location=useLocation();
   const { idUser, idLogbook } = useParams<{
     idUser: string;
     idLogbook: string;
@@ -39,7 +40,7 @@ export default function StaffLogbookDetailPage() {
         breadcrumbs={[
           { label: "Staff", to: ROUTES.staff },
           { label: "Detail", to: ROUTES.staffDetail(String(idUser)) },
-          { label: "Logbook", to: ROUTES.staffLogbook(String(idUser)) },
+          { label: "Logbook", to: ROUTES.staffLogbook(String(idUser)) + location.search },
           { label: "Detail" },
         ]}
       />

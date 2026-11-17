@@ -1,11 +1,15 @@
 import { arr, type Row } from './model';
 import { getActionLogbookFilterFields, sanitizeActionLogbookFilters, toActionLogbookFilterPayload, type ActionLogbookFilters } from './actionLogbookFilters';
-import type { DynamicLogbookAction, UserRole } from './dynamicLogbookForm';
+import { enabled, type DynamicLogbookAction, type UserRole } from './dynamicLogbookForm';
 
 /** Native HomeScreen uses the paginated getLogbook path for Bimbingan Explore;
  * the explicit legacy Explore branch returns its complete array without paging. */
 import { isBimbinganOperasiAction } from './bimbinganOperasiGrouping';
 export const isBimbinganRead = (action: DynamicLogbookAction) => isBimbinganOperasiAction(action);
+/** Other-category metadata enables the picker for PPDS, not folder navigation.
+ * Use the same role gate for fetching aggregates, rendering and pagination. */
+export const shouldGroupLogbooks = (action: DynamicLogbookAction, role: UserRole) =>
+  role === 'staff' && (enabled(action.allow_other_categories) || isBimbinganRead(action) || enabled(action.is_grouped_by_category));
 export const readRequestRole = (user: {role_name?: string}, role: UserRole) => String(user.role_name ?? '').trim().toLowerCase() === 'editor' || role === 'institution-admin' ? 'editor' : role;
 const filterKeys = {
   start_date:'startDate', end_date:'endDate', title:'title', id_ppds:'ppdsId', id_staff:'staffId', id_staff_jejaring:'staffJejaringId', id_hospital:'hospitalId', id_category:'categoryId', id_another_role:'anotherRoleId', id_stase:'staseId', exam_result:'examResult', is_presentation:'isPresentation',

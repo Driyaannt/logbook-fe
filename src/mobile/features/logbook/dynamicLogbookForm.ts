@@ -17,7 +17,7 @@ export type LocalAttachmentFile = {
   /** Server-issued metadata returned immediately after multipart upload. */
   uploaded?: UploadedLogbookAttachment;
 };
-export type DynamicChoice = { id: number; label: string };
+export type DynamicChoice = { id: number; label: string; is_other?: boolean; required_asm?: boolean };
 export type DynamicRoleMap = {
   idActionRole: number;
   label: string;
@@ -134,7 +134,7 @@ const formatDate = (date: Date) => {
   )}`;
 };
 
-const toChoices = (source: unknown): DynamicChoice[] =>
+const toChoices = (source: unknown, categoryMetadata=false): DynamicChoice[] =>
   (Array.isArray(source) ? source : []).flatMap(item => {
     const raw = item as Record<string, unknown>;
     const nested = (raw.m_user ??
@@ -163,14 +163,14 @@ const toChoices = (source: unknown): DynamicChoice[] =>
       nested?.role_name ??
       nested?.username;
     return Number.isFinite(id) && typeof label === 'string'
-      ? [{ id, label }]
+      ? [{ id, label, ...(categoryMetadata && (raw.is_other !== undefined || nested?.is_other !== undefined) ? {is_other:enabled(raw.is_other ?? nested?.is_other)} : {}), ...(categoryMetadata && (raw.required_asm !== undefined || nested?.required_asm !== undefined) ? {required_asm:enabled(raw.required_asm ?? nested?.required_asm)} : {}) }]
       : [];
   });
 
 export const getDynamicCategories = (action: DynamicLogbookAction) =>
   toChoices(
-    sourceArray(action, 'categories', 'm_action_category', 'action_categories'),
-  );
+    sourceArray(action, 'categories', 'm_action_category', 'action_categories'), true,
+      );
 export const getDynamicHospitals = (action: DynamicLogbookAction) =>
   toChoices(sourceArray(action, 'hospitals', 'm_hospital'));
 export const getDynamicAnotherRoles = (action: DynamicLogbookAction) =>
@@ -209,7 +209,7 @@ export function getDynamicAsmParams(action: DynamicLogbookAction) {
       ? [
           {
             id,
-            label: String(metadata?.name ?? raw.name ?? `Parameter ${id}`),
+            label: String(metadata?.name ?? raw.name ?? `Parameter ${id}`).replace(/\b(?:afektif|affective)\b/gi, 'Attitude'),
             ...(minScore !== undefined ? { minScore } : {}),
             ...(maxScore !== undefined ? { maxScore } : {}),
           },
@@ -353,6 +353,7 @@ export function shouldShowDynamicScoreFields(
   userRole: UserRole,
   selection: DynamicScoreSelection,
 ) {
+  if (getDynamicCategories(action).find(c=>c.id===selection.categoryId)?.is_other) return userRole==='staff' && !enabled(action.is_exam);
   if (usesStaffOnlyScore(action)) {
     return userRole === 'staff' && matchesStaffOnlyScoreCategory(action, selection.categoryId);
   }

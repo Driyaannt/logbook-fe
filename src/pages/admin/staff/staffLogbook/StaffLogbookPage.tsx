@@ -1,3 +1,4 @@
+import { InstitutionBimbingan } from "@/components/logbook/InstitutionBimbingan";
 import { Topbar } from "@/components/layout/Topbar";
 import { ROUTES } from "@/utils/routes";
 import { useParams, useNavigate } from "react-router-dom";
@@ -428,7 +429,7 @@ export default function StaffLogbookPage() {
 
           {/* Table Section */}
           <div className="flex-1 min-h-0 bg-white rounded-lg border overflow-hidden">
-            <BaseTable
+            <InstitutionBimbingan kind="staff" idUser={String(idUser)}><BaseTable
               data={logbooks}
               columns={columns}
               isLoading={isLoading}
@@ -444,7 +445,7 @@ export default function StaffLogbookPage() {
               onRowClick={handleRowClick}
               noDataText="Tidak ada data logbook"
               className="h-full"
-            />
+            /></InstitutionBimbingan>
           </div>
         </div>
       </div>

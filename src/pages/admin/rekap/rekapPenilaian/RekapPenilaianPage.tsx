@@ -197,7 +197,7 @@ export default function RekapPenilaianPage() {
         { header: "Title", accessorKey: "title" },
         { header: "Psikomotor", accessorKey: "psikomotor" },
         { header: "Knowledge", accessorKey: "knowledge" },
-        { header: "Afektif", accessorKey: "afektif" },
+        { header: "Attitude", accessorKey: "afektif" },
         { header: "Total", accessorKey: "total" },
       ];
 
@@ -389,7 +389,7 @@ export default function RekapPenilaianPage() {
     },
     {
       accessorKey: "afektif",
-      header: "Afektif",
+      header: "Attitude",
       size: 100,
       cell: ({ row: { original } }) => original.afektif ?? "-",
     },
