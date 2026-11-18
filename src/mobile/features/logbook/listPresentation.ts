@@ -1,4 +1,12 @@
 import type { Row } from './model';
+import { isBimbinganOperasiAction } from './bimbinganOperasiGrouping';
+
+export function isPpdsBimbinganCard(action:Row,item:Row,role:string):boolean {
+  return role==='ppds' && (isBimbinganOperasiAction(action)||isBimbinganOperasiAction(item.m_action));
+}
+export function isStaffBimbinganCard(action:Row,item:Row,role:string):boolean {
+  return /^staff(?:[\s_-]*jejaring)?$/i.test(role.trim()) && (isBimbinganOperasiAction(action)||isBimbinganOperasiAction(item.m_action));
+}
 
 /** Read-only presentation of ActionLogbookListScreen, not Detail/form metadata. */
 export type ListStatus = {label:string; tone:'verified'|'pending'|'rejected'|'lolos'|'remidi'|'tidak-lolos'|'unknown'; icon:'check'|'retry'|'failed'|'unknown'};
@@ -43,12 +51,13 @@ export function buildListPresentation(action:Row,item:Row,role:string,groupedEnt
   const location=text(item.m_hospital?.name||item.location);
   const dateFallback=!meaningful(location);
   const ppds=role==='ppds';
-  if(groupedEntry)return {kind:'bimbingan-entry',headline:text(item.m_user?.display_name,'PPDS'),subheadline:text(item.operation_code,`LB${item.id}`),status:listStatus(item),primaryLabel:'',primary:'',secondaryLabel:'',secondary:'',secondaryIcon:'calendar'};
-  return {kind:'record',headline:exam?text(item.m_action_category?.name??item.category??item.title,'Exam'):text(item.title,date),
-    subheadline:exam?'':meaningful(text(item.title,''))&&date!=='-'?date:'Waktu input logbook',
+  const fourRows=isPpdsBimbinganCard(action,item,role)||isStaffBimbinganCard(action,item,role);
+  if(groupedEntry&&!fourRows)return {kind:'bimbingan-entry',headline:text(item.m_user?.display_name,'PPDS'),subheadline:text(item.operation_code,`LB${item.id}`),status:listStatus(item),primaryLabel:'',primary:'',secondaryLabel:'',secondary:'',secondaryIcon:'calendar'};
+  return {kind:'record',headline:groupedEntry&&fourRows?date:exam?text(item.m_action_category?.name??item.category??item.title,'Exam'):text(item.title,date),
+    subheadline:groupedEntry&&fourRows?'':exam?'':meaningful(text(item.title,''))&&date!=='-'?date:'Waktu input logbook',
     status:exam?listExamStatus(item.exam_result):listStatus(item),
     primaryLabel:ppds?'Staff':'PPDS',
-    primary:exam?(ppds?text(item.created_by_name):text(item.m_user?.display_name)):(ppds?text(staffName,text(item.m_user?.display_name)):text(item.m_user?.display_name,staffName)),
-    secondaryLabel:exam||dateFallback?'Tanggal':'Lokasi',secondary:exam||dateFallback?date:location,
-    secondaryIcon:exam||dateFallback?'calendar':'location'};
+    primary:isStaffBimbinganCard(action,item,role)?text(item.m_user?.display_name):exam?(ppds?text(item.created_by_name):text(item.m_user?.display_name)):(ppds?text(staffName,text(item.m_user?.display_name)):text(item.m_user?.display_name,staffName)),
+    secondaryLabel:fourRows?'Lokasi':exam||dateFallback?'Tanggal':'Lokasi',secondary:fourRows?location:exam||dateFallback?date:location,
+    secondaryIcon:!fourRows&&(exam||dateFallback)?'calendar':'location'};
 }
